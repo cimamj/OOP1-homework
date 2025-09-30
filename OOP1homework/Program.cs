@@ -31,7 +31,6 @@ var emailsEvent3 = new List<string>()
 
 //stvoriti ljude
 var person1 = new Person("Jure", "Mamić", "jure.mamic@gmail.com");
-
 people.Add(person1);
 people.Add(new Person("Ana", "Kovač", "ana.kovac@gmail.com"));
 people.Add(new Person("Marko", "Horvat", "marko.horvat@gmail.com"));
@@ -58,7 +57,7 @@ void AddEventWithAttendance(string name, string location, DateTime start, DateTi
     }
 }
 
-AddEventWithAttendance("Radionica programiranja", "Split", DateTime.Now.AddDays(10), DateTime.Now.AddDays(10).AddHours(3), emailsEvent2);
+AddEventWithAttendance("Radionica programiranja", "Split", DateTime.Now.AddDays(-2), DateTime.Now.AddDays(2).AddHours(3), emailsEvent2);
 AddEventWithAttendance("Sportski dan", "Rijeka", DateTime.Now.AddDays(12), DateTime.Now.AddDays(12).AddHours(4), emailsEvent3);
 AddEventWithAttendance("Božićni party", "Zagreb", DateTime.Now.AddDays(20), DateTime.Now.AddDays(20).AddHours(5), emailsEvent1);
 AddEventWithAttendance("Predavanje o AI", "Osijek", DateTime.Now.AddDays(15), DateTime.Now.AddDays(15).AddHours(2), emailsEvent2);
@@ -70,3 +69,49 @@ AddEventWithAttendance("Networking event", "Zagreb", DateTime.Now.AddDays(35), D
 AddEventWithAttendance("Teambuilding", "Zagreb", DateTime.Now.AddDays(5), DateTime.Now.AddDays(5).AddHours(6), emailsEvent1);
 
 
+//aktivni eventi, tumacit cemo one koji se trenutno odrzavaju npr prvi
+
+while (true)
+{
+    Console.WriteLine("1 Aktivni eventi");
+    Console.WriteLine("5 Izađi");
+    Console.Write("Odaberi opciju: ");
+
+    string choice = (Console.ReadLine());
+
+    switch (choice)
+    {
+        case "1": ShowActiveEvents(events);
+            break;
+        case "5": return;
+        default:
+            Console.WriteLine("Nevažeći unos. Pokušaj ponovno.");
+            break;
+    }
+}
+
+void ShowActiveEvents(List<Event> events)
+{
+    var now = DateTime.Now;
+    foreach (Event e in events)
+    {
+        if(e.StartDate <= now && e.EndDate >= now)
+        {
+            double hoursLeft = (e.EndDate - now).TotalHours;
+            double daysLeft = hoursLeft / 24;
+            daysLeft = Math.Round(daysLeft, 1);
+
+
+            Console.WriteLine($"{e.Id}");
+            Console.WriteLine($"{e.Name} - {e.Location} - Ends in {daysLeft} days");
+
+            Console.WriteLine("Popis sudionika:");
+            foreach(var email in e.getParticipantEmails())
+            {
+                Console.WriteLine($" - {email}");
+            }
+        }
+        
+
+    }
+}
