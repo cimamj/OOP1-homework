@@ -27,5 +27,10 @@ namespace OOP1homework.Classes
             Attendance[eventId] = true;
         }
 
+        public void removeAttendance(Guid eventId) 
+        {
+            Attendance[eventId] = false;
+        }
+
     }
 }

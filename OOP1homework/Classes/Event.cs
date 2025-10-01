@@ -34,7 +34,7 @@ namespace OOP1homework.Classes
             return true;
         }
 
-        public List<string> getParticipantEmails()
+        public List<string> GetParticipantEmails()
         {
             return new List<string>(participantEmails);
         }

@@ -1,4 +1,5 @@
 ﻿using OOP1homework.Classes;
+using System.ComponentModel.DataAnnotations;
 
 //lista evenata i ljudi
 var events = new List<Event>();
@@ -49,10 +50,10 @@ void AddEventWithAttendance(string name, string location, DateTime start, DateTi
     var newEvent = new Event(name, location, start, end, emails);
     events.Add(newEvent);
 
-    foreach(var email in emails)
+    foreach(var email in emails) //u pocetku svima stavim da su bili prisutni iz liste emails
     {
         var person = people.Find(p => p.Email == email);
-        if(person != null) //moze vratiti null ako nema u listi osobe s tim emailom
+        if(person != null) //moze vratiti null ako nema u listi osobe s tim emailom, mozda kasnije stvoriti za null novi person s tim emailom
         person.AddAttendance(newEvent.Id);
     }
 }
@@ -92,11 +93,21 @@ while (true)
 
 void ShowActiveEvents(List<Event> events)
 {
+
+
     var now = DateTime.Now;
-    foreach (Event e in events)
+    var activeEvents = events.Where(e => e.StartDate <= now && e.EndDate >= now).ToList();
+
+    //ako ih nema
+    if(activeEvents.Count() == 0)
     {
-        if(e.StartDate <= now && e.EndDate >= now)
-        {
+        Console.WriteLine("Nema aktivnih evenata.");
+        return;
+    }
+
+    foreach (Event e in activeEvents)
+    {
+      
             double hoursLeft = (e.EndDate - now).TotalHours;
             double daysLeft = hoursLeft / 24;
             daysLeft = Math.Round(daysLeft, 1);
@@ -104,14 +115,79 @@ void ShowActiveEvents(List<Event> events)
 
             Console.WriteLine($"{e.Id}");
             Console.WriteLine($"{e.Name} - {e.Location} - Ends in {daysLeft} days");
-
             Console.WriteLine("Popis sudionika:");
-            foreach(var email in e.getParticipantEmails())
+            foreach(var email in e.GetParticipantEmails())
             {
                 Console.WriteLine($" - {email}");
             }
-        }
         
-
     }
+
+    Console.WriteLine("\nSubmenu:");
+    Console.WriteLine("1. Zabiljezi neprisutnosti");
+    Console.WriteLine("2. Povratak na glavni meni");
+    string submenuChoice = Console.ReadLine();
+
+    while (true)
+    {
+
+        switch (submenuChoice) 
+        {
+            case "1":
+                recordAbsence(activeEvents);
+                break;
+            case "2":
+                return;
+            default: //
+                Console.WriteLine("Nevažeći unos. Pokušaj ponovno.");
+                break;
+        }
+    }
+}
+
+void recordAbsence(List<Event> activeEvents)
+{
+    if (activeEvents.Count == 0)
+    {
+        Console.WriteLine("Nema aktivnih evenata za bilježenje neprisutnosti.");
+        return;
+    }
+    //event id
+    Console.WriteLine("Unesi redni broj eventa za kojeg zelis promjeniti prisutnost");
+    for (int i = 0; i < activeEvents.Count; i++)
+    { Console.WriteLine($"{i + 1} {activeEvents[i].Name}"); }
+
+    string choice = Console.ReadLine();
+    if (!int.TryParse(choice, out var index) || index < 1 || index > activeEvents.Count) 
+    {
+        Console.WriteLine("Nevažeći odabir eventa.");
+        return;
+    }
+
+    
+    var selectedEvent = activeEvents[index-1];
+    var eventId = selectedEvent.Id;
+    //email 
+    Console.WriteLine("Unesi emailove osoba koje nisu bile prisutne"); //ako unese dva razmaka , strinsplitoptions nece uzeti prazan string
+    string[] absenceEmails = Console.ReadLine().Trim().ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    foreach (var email in absenceEmails) 
+    { 
+        var person = people.Find(p=>p.Email == email);
+
+        if(!selectedEvent.GetParticipantEmails().Contains(email))
+        {
+            Console.WriteLine($"Osoba {email} nije sudionik ovog eventa.");
+            continue;   
+        }
+        if(person == null)
+        {
+            Console.WriteLine($"Osoba s emailom {email} ne postoji u sustavu.");
+            continue;
+        }
+
+
+        person.removeAttendance(eventId);
+            Console.WriteLine($"Email {email} nije sudionik ovog eventa.");
+    }
+
 }
