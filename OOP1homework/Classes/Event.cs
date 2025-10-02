@@ -34,6 +34,8 @@ namespace OOP1homework.Classes
             return true;
         }
 
+        public bool RemoveParticipant(string email) { if (participantEmails.Contains(email)) participantEmails.Remove(email); return true; }
+
         public List<string> GetParticipantEmails()
         {
             return new List<string>(participantEmails);
