@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace OOP1homework.Enums
 {
-    internal class EventStatus
+    public enum EventStatus
     {
+        Active,
+        Upcoming,
+        Past
     }
 }

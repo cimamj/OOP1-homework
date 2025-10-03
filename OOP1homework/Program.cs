@@ -1,6 +1,7 @@
 ﻿using OOP1homework.Classes;
 using System.ComponentModel.DataAnnotations;
 using OOP1homework.Enums;
+using System.ComponentModel;
 
 //lista evenata i ljudi
 var events = new List<Event>();
@@ -47,7 +48,7 @@ people.Add(new Person("Katarina", "Šimić", "katarina.simic@gmail.com"));
 
 
 //stvoriti evente i dodati attendance pristunost
-void AddEventWithAttendance(string name, string location, DateTime start, DateTime end, List<string> emails)
+Event AddEventWithAttendance(string name, string location, DateTime start, DateTime end, List<string> emails)
 {
     var newEvent = new Event(name, location, start, end, emails);
     events.Add(newEvent);
@@ -55,23 +56,46 @@ void AddEventWithAttendance(string name, string location, DateTime start, DateTi
     foreach(var email in emails) //u pocetku svima stavim da su bili prisutni iz liste emails
     {
         var person = people.Find(p => p.Email == email);
-        if(person != null) //moze vratiti null ako nema u listi osobe s tim emailom, mozda kasnije stvoriti za null novi person s tim emailom
-        person.AddAttendance(newEvent.Id);
+        if (person != null)   //moze vratiti null ako nema u listi osobe s tim emailom, mozda kasnije stvoriti za null novi person s tim emailom
+        {
+            bool zauzet = false;
+            foreach (var e in events) //za sve evente
+            {
+                if (person.hasAttended(e.Id)) //gledaj je li person prisutna na njima, ako je
+                {
+                    if (start < e.EndDate && end > e.StartDate)
+                    {
+                        Console.WriteLine($"Osoba {person.Email} je zauzeta u terminu {e.Name} ({e.StartDate} - {e.EndDate}) i ne može biti dodana na {newEvent.Name}.");
+                        zauzet = true;
+                        break; //ne tribas ic dalje gledat je za sljedece evente
+                    }
+                }
+            }
+            if (!zauzet)
+            {
+                person.AddAttendance(newEvent.Id);
+                Console.WriteLine($"Osoba {person.Email} uspješno dodana na {newEvent.Name}.");
+            }
+
+        }
+        else
+        {
+            Console.WriteLine($"Osoba s emailom {email} ne postoji u sustavu!");
+        }
+
+
+
     }
+    if (newEvent == null) return null;
+
+    return newEvent;
 }
 
 AddEventWithAttendance("Radionica programiranja", "Split", DateTime.Now.AddDays(-2), DateTime.Now.AddDays(2).AddHours(3), emailsEvent2);
 AddEventWithAttendance("Sportski dan", "Rijeka", DateTime.Now.AddDays(12), DateTime.Now.AddDays(12).AddHours(4), emailsEvent3);
 AddEventWithAttendance("Božićni party", "Zagreb", DateTime.Now.AddDays(20), DateTime.Now.AddDays(20).AddHours(5), emailsEvent1);
 AddEventWithAttendance("Predavanje o AI", "Osijek", DateTime.Now.AddDays(15), DateTime.Now.AddDays(15).AddHours(2), emailsEvent2);
-AddEventWithAttendance("Konferencija", "Zadar", DateTime.Now.AddDays(18), DateTime.Now.AddDays(18).AddHours(8), emailsEvent3);
-AddEventWithAttendance("Team lunch", "Split", DateTime.Now.AddDays(7), DateTime.Now.AddDays(7).AddHours(2), emailsEvent1);
-AddEventWithAttendance("Hackathon", "Zagreb", DateTime.Now.AddDays(25), DateTime.Now.AddDays(26).AddHours(6), emailsEvent2);
-AddEventWithAttendance("Seminar produktivnosti", "Rijeka", DateTime.Now.AddDays(30), DateTime.Now.AddDays(30).AddHours(3), emailsEvent3);
-AddEventWithAttendance("Networking event", "Zagreb", DateTime.Now.AddDays(35), DateTime.Now.AddDays(35).AddHours(4), emailsEvent1);
-AddEventWithAttendance("Teambuilding", "Zagreb", DateTime.Now.AddDays(5), DateTime.Now.AddDays(5).AddHours(6), emailsEvent1);
-
-
+AddEventWithAttendance("Teambuilding", "Zagreb", DateTime.Now.AddDays(-5), DateTime.Now.AddDays(-5).AddHours(6), emailsEvent1);
 //aktivni eventi, tumacit cemo one koji se trenutno odrzavaju npr prvi
 
 while (true)
@@ -79,6 +103,7 @@ while (true)
     Console.WriteLine("1 Aktivni eventi");
     Console.WriteLine("2 Nadolazeci eventi");
     Console.WriteLine("3 Eventi koji su zavrsili");
+    Console.WriteLine("4 Kreiraj event");
     Console.WriteLine("5 Izađi");
     Console.Write("Odaberi opciju: ");
 
@@ -91,6 +116,9 @@ while (true)
         case "2": ShowUpcomingEvents(events);
             break;
         case "3": ShowPastEvents(events);
+            break;
+        case "4": 
+            CreateEvent(events);
             break;
         case "5": return;
         default:
@@ -273,7 +301,7 @@ void printEvents(List<Event> events, EventStatus status) //moram poslati varijab
 
         foreach (var email in e.GetParticipantEmails())
         {
-            Console.WriteLine($" - {email}");
+            Console.WriteLine($" - {email}");  //ode se ispisuju samo emailovi, a ne gleda se je li osoba prisutna ili nije ali to se ni ne trazi 
         }
     }
 }
@@ -289,7 +317,7 @@ void deleteEvent(List<Event> upcomingEvent)
         Console.WriteLine($"{i + 1} {upcomingEvent[i].Name}");
     }
     string choice = Console.ReadLine();
-    if (!int.TryParse(choice, out int index) || index < 0 || index > upcomingEvent.Count)
+    if (!int.TryParse(choice, out int index) || index < 1 || index > upcomingEvent.Count)
     {
         Console.WriteLine("Pogresan unos");
         return; //da vrati na submenu
@@ -333,9 +361,9 @@ void removePeople(List<Event> upcomingEvent)
         var person = people.Find(p => (p.Name + " " + p.Surname).ToLower() == fullname);
         if (person == null) { Console.WriteLine("Osoba ne postoji u sustavu"); }
         if (!selectedEvent.GetParticipantEmails().Contains(person.Email)) { Console.WriteLine($"Osoba {person} nije sudionik ovog eventa"); }
-        person?.removeAttendance(selectedEvent.Id);
-        selectedEvent.RemoveParticipant(person.Email); //doda novu metodu remove participant da maknem s liste emailova tog eventa taj mail
-
+        person.removeAttendance(selectedEvent.Id);
+    /*    selectedEvent.RemoveParticipant(person.Email);*/ //doda novu metodu remove participant da maknem s liste emailova tog eventa taj mail
+        //ovo gore zakomentirano jer zelim da lista emails ostane uvijek fiksna, to su pozvani ljudi a samo cu im staviti false onima koji nisu prisutni
         Console.WriteLine($"Osoba {fullname} uspješno uklonjena s eventa {selectedEvent.Name}.");
     }
 
@@ -355,4 +383,81 @@ void ShowPastEvents(List<Event> events)
     }
 
     printEvents(finishedEvents, EventStatus.Past);
+    printPresentAndAbsent(finishedEvents);
+   
+}
+
+void printPresentAndAbsent(List<Event> events_)
+{
+ foreach(var e in events_)
+    {
+        foreach (var email_ in e.GetParticipantEmails())
+        {
+            var person = people.Find(p => p.Email == email_);
+            if (person != null && person.hasAttended(e.Id))
+                Console.WriteLine($"Prisutan - {email_}");
+            else if (person != null)
+                Console.WriteLine($"Nije prisutan - {email_}");
+            else
+                Console.WriteLine($"Osoba s tim emailom {email_} ne postoji u sustavu"); //samo za pastevents se ispisuju ne prisutni
+        }
+    }
+}
+
+
+
+void CreateEvent(List<Event> events)
+{
+    var newEvent = inputEvent();
+
+    if(newEvent != null)
+    {
+        AddEventWithAttendance(newEvent.Name, newEvent.Location, newEvent.StartDate, newEvent.EndDate, newEvent.GetParticipantEmails());
+        Console.WriteLine("Event uspješno kreiran!"); 
+    }
+
+
+}
+
+Event? inputEvent()
+{
+    Console.WriteLine("Unesite naziv eventa");
+    string name = Console.ReadLine().Trim();
+
+    Console.WriteLine("Unesi lokaciju: ");
+    string location = Console.ReadLine().Trim();
+
+    Console.WriteLine("Unesi datum početka (yyyy-MM-dd HH:mm): ");
+    //kao sto mozes parsati u int mozes i u dateTime
+    if(!DateTime.TryParse(Console.ReadLine(), out  DateTime startDate))
+    {
+        Console.WriteLine("Nevažeći format datuma početka.");
+        return null;
+    }
+
+    Console.Write("Unesi datum završetka (yyyy-MM-dd HH:mm): ");
+    if (!DateTime.TryParse(Console.ReadLine(), out DateTime endDate))
+    {
+        Console.WriteLine("Nevažeći format datuma završetka.");
+        return null;
+    }
+
+    //validacije za upcoming te start>end logicno dodaj gore
+    if (startDate >= endDate)
+    {
+        Console.WriteLine("Kraj eventa ne smije biti prije pocetka");
+        return null;
+    }
+    if (startDate <= DateTime.Now)
+    {
+        Console.WriteLine("Mora zapoceti u buducnosti");
+        return null;
+    }
+
+
+
+    Console.WriteLine("Unesi emailove sudionika ovog eventa");
+    var emails = Console.ReadLine().Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(e=>e.Trim().ToLower()).ToList();
+    return AddEventWithAttendance(name, location, startDate, endDate, emails); 
+
 }
